@@ -330,7 +330,7 @@ func (scraper *Scraper) SolvePayload() (*http.Response, error) {
 			log.Printf("Fetching main challenge. (%v/%v)", scraper.FetchingChallengeRetries, scraper.FetchingChallengeMaxRetries)
 		}
 		if scraper.FetchingChallengeRetries == scraper.FetchingChallengeMaxRetries {
-			return scraper.OriginalRequest, fmt.Errorf("Fetching main challenge failed after %v retries.\nThis error is mostlikly related to a wring usage of headers.\nIf this exception occurs on an endpoint which is used to peform a carting or a similiar action note that the solving process shell not work here by cloudflare implementation on sites.\nIf this occurs you need to regen the cookie on a get page request or similiar with resettet headers.\nAfter generation you can assign the headers again and cart again.", scraper.FetchingChallengeMaxRetries)
+			return scraper.OriginalRequest, fmt.Errorf("Fetching main challenge failed after %v retries.", scraper.FetchingChallengeMaxRetries)
 		} else {
 			scraper.FetchingChallengeRetries++
 
