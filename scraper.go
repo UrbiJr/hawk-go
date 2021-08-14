@@ -247,7 +247,9 @@ func (scraper *Scraper) ChallengeInitiationPayload() (*http.Response, error) {
 			scraper.TS = challengePayloadResponse.TS
 			scraper.Md = challengePayloadResponse.Md
 
-			log.Println("Submitted init payload to the api.")
+			if scraper.Debug {
+				log.Println("Submitted init payload to the api.")
+			}
 			return scraper.InitiateCloudflare()
 		}
 

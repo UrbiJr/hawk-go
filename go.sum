@@ -11,8 +11,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/useflyent/fhttp v0.0.0-20210727032538-9a894d5d506b h1:BYt1mrohZkByvTsljFjV7N9m6Y6INWfH5xtzl85/te4=
-github.com/useflyent/fhttp v0.0.0-20210727032538-9a894d5d506b/go.mod h1:GTDLTqqiwTuUM1f9bCE/HoHOzBaCtT1Zjkd98vUEwrI=
+github.com/useflyent/fhttp v0.0.0-20210801005649-f160dd923789 h1:EnTm6BiUoGxi7fdeHMnSBnDyyKYT0AWq96V3cXouL4s=
+github.com/useflyent/fhttp v0.0.0-20210801005649-f160dd923789/go.mod h1:GTDLTqqiwTuUM1f9bCE/HoHOzBaCtT1Zjkd98vUEwrI=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
 golang.org/x/net v0.0.0-20210610132358-84b48f89b13b h1:k+E048sYJHyVnsr1GDrRZWQ32D2C7lWs9JRc0bel53A=
