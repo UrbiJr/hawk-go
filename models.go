@@ -9,6 +9,7 @@ import (
 type Scraper struct {
 	Client                         http.Client
 	CaptchaFunction                func(originalURL string, siteKey string) (string, error)
+	CaptchaKind                    int
 	FingerprintChallenge           bool
 	Script                         string
 	InitScript                     *http.Response
@@ -52,6 +53,7 @@ type Scraper struct {
 	ChallengeResultRetries         int
 	ChallengeResultMaxRetries      int
 	FinalApi                       apiResponse
+	CaptchaFinalApi                apiCaptchaResponse
 	SubmitFinalChallengeRetries    int
 	SubmitFinalChallengeMaxRetries int
 	RerunRetries                   int
@@ -82,4 +84,22 @@ type apiResponse struct {
 	SiteKey      string `json:"sitekey"`
 	Click        bool   `json:"click"`
 	Valid        bool   `json:"valid"`
+}
+
+type captchaResult struct {
+	Name  string   `json:"name"`
+	Th    string   `json:"th"`
+	Ts    int      `json:"ts"`
+	CSign string   `json:"cSign"`
+	ChCC  string   `json:"chCC"`
+	ChCAS string   `json:"chCAS"`
+	CIRT  []string `json:"cIRT"`
+}
+
+type apiCaptchaResponse struct {
+	Result  captchaResult `json:"result"`
+	Status  string        `json:"status"`
+	Captcha bool          `json:"captcha"`
+	SiteKey string        `json:"sitekey"`
+	Click   bool          `json:"click"`
 }

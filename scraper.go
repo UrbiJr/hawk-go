@@ -92,7 +92,7 @@ func (scraper *Scraper) Injection(response *http.Response, err error) (*http.Res
 	if IsNewIUAMChallenge(response) {
 		challengePresent = true
 	} else if IsNewCaptchaChallenge(response) {
-		scraper.Captcha = true
+		challengePresent = true
 	} else if IsFingerprintChallenge(response) {
 		scraper.FingerprintChallenge = true
 		challengePresent = true
@@ -330,6 +330,12 @@ func (scraper *Scraper) SolvePayload() (*http.Response, error) {
 			log.Printf("Fetching main challenge. (%v/%v)", scraper.FetchingChallengeRetries, scraper.FetchingChallengeMaxRetries)
 		}
 		if scraper.FetchingChallengeRetries == scraper.FetchingChallengeMaxRetries {
+			/*
+				This error is most likely related to a wrong usage of headers.
+				If this exception occurs on an endpoint which is used to peform a carting or a similiar action note that the solving process shell not work here by cloudflare implementation on sites.
+				If this occurs you need to regen the cookie on a get page request or similiar with resettet headers.
+				After generation you can assign the headers again and cart again.
+			*/
 			return scraper.OriginalRequest, fmt.Errorf("Fetching main challenge failed after %v retries.", scraper.FetchingChallengeMaxRetries)
 		} else {
 			scraper.FetchingChallengeRetries++
@@ -471,21 +477,46 @@ func (scraper *Scraper) GetChallengeResult() (*http.Response, error) {
 				scraper.HandleLoopError(errFormat, err)
 				continue
 			}
-			err = ReadAndUnmarshalBody(ee.Body, &scraper.FinalApi)
+			body, err = ReadAndCopyBody(ee)
 			if err != nil {
 				scraper.HandleLoopError(errFormat, err)
 				continue
 			}
+			err = json.Unmarshal(body, &scraper.FinalApi)
+			if err != nil {
+				err = json.Unmarshal(body, &scraper.CaptchaFinalApi)
+				if err != nil {
+					scraper.HandleLoopError(errFormat, err)
+					continue
+				}
+				scraper.ChallengeResultRetries = 0
+				if scraper.Debug {
+					log.Println("Fetched challenge response.")
+				}
+				return scraper.HandleFinalCaptchaApi()
+			}
 
 			scraper.ChallengeResultRetries = 0
-
 			if scraper.Debug {
 				log.Println("Fetched challenge response.")
 			}
-
 			return scraper.HandleFinalApi()
 		}
 	}
+}
+
+func (scraper *Scraper) HandleFinalCaptchaApi() (*http.Response, error) {
+	// Handle final API result and rerun if needed
+
+	if scraper.CaptchaFinalApi.Status == "rerun" {
+		return scraper.HandleRerun()
+	}
+	if scraper.CaptchaFinalApi.Captcha {
+		return scraper.HandleCaptcha()
+	} else {
+		return scraper.SubmitChallenge()
+	}
+
 }
 
 func (scraper *Scraper) HandleFinalApi() (*http.Response, error) {
@@ -685,29 +716,49 @@ func (scraper *Scraper) HandleCaptcha() (*http.Response, error) {
 			scraper.CaptchaRetries++
 			var token string
 			var err error
-			if scraper.FinalApi.Click {
+			var sitekey string
+			var payload []byte
+			if scraper.FinalApi.Click || scraper.CaptchaFinalApi.Click {
 				token = "click"
 			} else {
 				errFormat := "Failed to get captcha token from cap function: %v"
 				if scraper.Debug {
 					log.Println("Captcha needed, requesting token.")
 				}
-				token, err = scraper.CaptchaFunction(scraper.OriginalRequest.Request.URL.String(), scraper.FinalApi.SiteKey)
+				if scraper.FinalApi.SiteKey != "" {
+					sitekey = scraper.FinalApi.SiteKey
+				} else {
+					sitekey = scraper.CaptchaFinalApi.SiteKey
+				}
+				token, err = scraper.CaptchaFunction(scraper.OriginalRequest.Request.URL.String(), sitekey)
 				if err != nil {
 					scraper.HandleLoopError(errFormat, err)
 					continue
 				}
 			}
 
-			payload, err := json.Marshal(map[string]interface{}{
-				"result":             scraper.Result,
-				"token":              token,
-				"h-captcha-response": token,
-				"data":               scraper.FinalApi.Result,
-			})
-			if err != nil {
-				scraper.HandleLoopError(errFormat, err)
-				continue
+			if scraper.FinalApi.Result != "" {
+				payload, err = json.Marshal(map[string]interface{}{
+					"result":             scraper.Result,
+					"token":              token,
+					"h-captcha-response": token,
+					"data":               scraper.FinalApi.Result,
+				})
+				if err != nil {
+					scraper.HandleLoopError(errFormat, err)
+					continue
+				}
+			} else {
+				payload, err = json.Marshal(map[string]interface{}{
+					"result":             scraper.Result,
+					"token":              token,
+					"h-captcha-response": token,
+					"data":               scraper.CaptchaFinalApi.Result,
+				})
+				if err != nil {
+					scraper.HandleLoopError(errFormat, err)
+					continue
+				}
 			}
 
 			ff, err := scraper.Client.Post(fmt.Sprintf("https://%v/cf-a/ov1/cap1", scraper.ApiDomain)+"?"+CreateParams(scraper.AuthParams), "application/json", bytes.NewBuffer(payload))

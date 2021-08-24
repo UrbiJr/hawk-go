@@ -72,6 +72,7 @@ func IsNewIUAMChallenge(response *http.Response) bool {
 	if err != nil {
 		return false
 	}
+
 	return strings.Contains(response.Header.Get("Server"), "cloudflare") &&
 		(response.StatusCode == 429 || response.StatusCode == 503) &&
 		firstReg && secondReg
@@ -105,9 +106,13 @@ func IsNewCaptchaChallenge(response *http.Response) bool {
 	if err != nil {
 		return false
 	}
+	thirdReg, err := regexp.MatchString(`cpo.src\s*=\s*"/cdn-cgi/challenge-platform/?\w?/?\w?/orchestrate/captcha/v1`, string(body))
+	if err != nil {
+		return false
+	}
 	return strings.Contains(response.Header.Get("Server"), "cloudflare") &&
 		(response.StatusCode == 403) &&
-		firstReg && secondReg
+		firstReg && secondReg || thirdReg && secondReg
 }
 
 func (scraper *Scraper) HandleLoopError(errFormat string, err error) {
